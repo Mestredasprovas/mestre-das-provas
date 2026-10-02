@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mestre das provas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--tx:#1d1d1b;--mu:#6b6a64;--bd:#dddbd3;--ac:#2f5d50;--acx:#fff;--ok:#1f7a45;--okb:#e5f4ea;--er:#b3261e;--erb:#fbe9e7;--sel:#e6efec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161715;--card:#1f211e;--tx:#ecebe6;--mu:#a3a29a;--bd:#33352f;--ac:#7fc2ad;--acx:#0f1a16;--ok:#7fd6a0;--okb:#173324;--er:#ff8a80;--erb:#3a1e1b;--sel:#26332e}}
+:root[data-theme="dark"]{--bg:#161715;--card:#1f211e;--tx:#ecebe6;--mu:#a3a29a;--bd:#33352f;--ac:#7fc2ad;--acx:#0f1a16;--ok:#7fd6a0;--okb:#173324;--er:#ff8a80;--erb:#3a1e1b;--sel:#26332e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 56px}
+h1{font-size:1.7rem;margin:0 0 4px}
+.sub{color:var(--mu);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:16px}
+textarea{width:100%;min-height:170px;resize:vertical;border:1px solid var(--bd);border-radius:10px;padding:12px;background:var(--bg);color:var(--tx);font:inherit}
+label{font-weight:600;font-size:.9rem;display:block;margin-bottom:6px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.row>div{flex:1;min-width:150px}
+select,input{width:100%;padding:9px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:10px 16px}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600;width:100%;margin-top:16px;padding:12px}
+button:disabled{opacity:.6;cursor:default}
+.hint{font-size:.82rem;color:var(--mu);margin-top:6px}
+.q h3{font-size:1.02rem;margin:0 0 12px}
+.q small{color:var(--mu);font-weight:400}
+.opt{display:block;width:100%;text-align:left;margin-bottom:8px;padding:11px 13px}
+.opt.sel{background:var(--sel);border-color:var(--ac)}
+.opt.ok{background:var(--okb);border-color:var(--ok);color:var(--ok)}
+.opt.er{background:var(--erb);border-color:var(--er);color:var(--er)}
+.txt{border-left:3px solid var(--bd);background:var(--bg);padding:10px 12px;border-radius:6px;font-size:.93rem;margin-bottom:12px;white-space:pre-wrap}
+.why{font-size:.85rem;color:var(--mu);margin:-4px 0 10px 4px}
+.exp{margin-top:10px;padding:11px 13px;border-left:3px solid var(--ac);background:var(--bg);border-radius:6px;font-size:.93rem}
+.st{font-weight:700;margin-bottom:4px}
+.st.ok{color:var(--ok)}.st.er{color:var(--er)}
+.msg{padding:12px;border-radius:10px;background:var(--erb);color:var(--er);margin-top:12px}
+.score{text-align:center;font-size:1.2rem;font-weight:700}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+.prog{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);padding:8px 0;font-size:.9rem;color:var(--mu);display:flex;justify-content:space-between;align-items:center;gap:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<h1>🎓 Mestre das provas</h1>
+<p class="sub">Transforme qualquer matéria em simulado. Cole o texto ou envie o arquivo, responda as questões, veja a correção comentada e baixe o PDF. Sem cadastro.</p>
+
+<section class="card" id="inp">
+  <label for="txt">Conteúdo da matéria</label>
+  <textarea id="txt" placeholder="Cole aqui o texto: resumo, slides, apostila, capítulo de livro..."></textarea>
+  <div class="hint" id="cc"></div>
+  <div class="row">
+    <div><label for="file">Ou envie um arquivo</label><input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.html"><div class="hint" id="fh">PDF, DOCX, TXT ou MD</div></div>
+    <div><label for="mode">Modo</label><select id="mode"><option value="simulado" selected>Simulado (corrige no final)</option><option value="treino">Treino (corrige a cada questão)</option></select></div>
+  </div>
+  <div class="row">
+    <div><label for="n">Nº de questões</label><select id="n"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></div>
+    <div><label for="lv">Nível</label><select id="lv"><option value="intermediário">Intermediário</option><option value="avançado" selected>Avançado</option><option value="concurso/residência (muito difícil)">Muito difícil</option></select></div>
+    <div><label for="tm">Tempo limite (simulado)</label><select id="tm"><option value="0" selected>Sem limite</option><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 hora</option><option value="90">1h30</option><option value="120">2 horas</option></select></div>
+    <div><label for="nome">Seu nome (para o PDF)</label><input id="nome" maxlength="80" placeholder="Opcional"></div>
+  </div>
+  <button class="p" id="go">Gerar simulado</button>
+  <div class="msg" id="err" hidden></div>
+</section>
+
+<section id="out" hidden></section>
+<p class="hint" style="text-align:center;margin-top:24px">Mestre das provas · questões geradas por IA a partir do seu material. Confira sempre com a bibliografia da disciplina.</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const MAX=150000, L=i=>String.fromCharCode(65+i);
+let Q=[],P=[],R=[],mode="simulado",done=false,dl=true,meta={},T=null,t0=0,tl="";
+const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+
+if(window.pdfjsLib){try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}catch(e){}}
+function cnt(){$("cc").textContent=$("txt").value.length.toLocaleString("pt-BR")+" / "+MAX.toLocaleString("pt-BR")+" caracteres"}
+$("txt").addEventListener("input",cnt);cnt();
+function showErr(m){const e=$("err");e.textContent=m;e.hidden=!m}
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+
+$("file").addEventListener("change",async ev=>{
+  const f=ev.target.files[0]; if(!f)return;
+  const h=$("fh"); h.textContent="Lendo arquivo..."; showErr("");
+  try{
+    const ext=f.name.split(".").pop().toLowerCase(); let t="";
+    if(ext==="pdf"){
+      const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+      for(let i=1;i<=pdf.numPages&&t.length<MAX*2;i++){const pg=await pdf.getPage(i);const c=await pg.getTextContent();t+=c.items.map(x=>x.str).join(" ")+"\n"}
+    }else if(ext==="docx"){
+      t=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
+    }else{
+      t=await f.text();
+      if(ext==="html")t=new DOMParser().parseFromString(t,"text/html").body.textContent;
+    }
+    t=t.trim();
+    if(t.length<50)throw new Error("Pouco texto extraído (PDF escaneado?). Cole o texto manualmente.");
+    $("txt").value=t;cnt(); h.textContent="✓ "+f.name+" ("+t.length.toLocaleString("pt-BR")+" caracteres)";
+  }catch(e){h.textContent="PDF, DOCX, TXT ou MD"; showErr("Não consegui ler o arquivo: "+(e.message||e))}
+});
+
+const mk=(t,n,lv)=>`Você é professor universitário e elaborador de provas. Com base APENAS no conteúdo abaixo, crie ${n} questões objetivas de múltipla escolha, nível ${lv}, com 4 alternativas e exatamente uma correta.
+Regras: exigir análise, aplicação, comparação ou raciocínio (não só memorização); distratores plausíveis; variar a posição da correta; não repetir questões; enunciados claros, no idioma do conteúdo.
+REGRA IMPORTANTE: se o enunciado disser "segundo o texto", "de acordo com o texto", "com base no texto", "o trecho", "o autor" ou qualquer referência a um texto, inclua obrigatoriamente no campo "texto" o trecho completo (2 a 8 frases, fiel ao conteúdo) a que a questão se refere. Nunca cite um texto que não esteja no campo "texto". Se a questão não se refere a um texto, use "texto":"".
+Para cada questão inclua "explicacao" (por que a alternativa correta está certa, 1-3 frases) e "porque": lista de 4 frases curtas, na ordem das alternativas, dizendo por que cada alternativa está certa ou errada.
+Responda SOMENTE com JSON: {"questoes":[{"texto":"...","enunciado":"...","alternativas":["...","...","...","..."],"correta":0,"explicacao":"...","porque":["...","...","...","..."],"tema":"..."}]} ("correta" = índice 0-3; alternativas sem prefixo de letra).
+
+CONTEÚDO:
+"""
+${t}
+"""`;
+function chunks(t){
+  const enc=new TextEncoder(),LIM=52000,B=x=>enc.encode(x).length;
+  const ps=[];t.split(/\n+/).forEach(p=>{while(B(p)>20000){ps.push(p.slice(0,8000));p=p.slice(8000)}ps.push(p)});
+  const out=[];let cur="";
+  ps.forEach(p=>{if(cur&&B(cur)+B(p)+1>LIM){out.push(cur);cur=p}else cur=cur?cur+"\n"+p:p});
+  if(cur)out.push(cur);return out}
+$("go").addEventListener("click",async()=>{
+  showErr("");
+  let t=$("txt").value.trim();
+  if(t.length<100){showErr("Coloque um conteúdo com pelo menos alguns parágrafos.");return}
+  let trunc=t.length>MAX; if(trunc)t=t.slice(0,MAX);
+  const btn=$("go"); btn.disabled=true; btn.textContent="Gerando... (pode levar até 1 minuto)";
+  try{
+    const n=$("n").value, lv=$("lv").value;
+    const c0=chunks(t),cs=c0.slice(0,4);if(c0.length>4)trunc=true;
+    const nT=+n,jobs=[];
+    for(let k=0,r=nT;r>0;k++){const q=Math.min(4,r);jobs.push({texto:cs[k%cs.length],n:q});r-=q}
+    let done_=0;btn.textContent="Gerando... 0 de "+jobs.length;
+    const rs=await Promise.all(jobs.map(async jb=>{
+      const resp=await fetch("/api/gerar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({texto:jb.texto,n:jb.n,nivel:lv})});
+      const d=await resp.json().catch(()=>({}));
+      if(!resp.ok)throw new Error(d.erro||"Erro "+resp.status);
+      btn.textContent="Gerando... "+(++done_)+" de "+jobs.length;return d.questoes||[]}));
+    const all=[].concat(...rs).filter(q=>q&&q.enunciado&&Array.isArray(q.alternativas)&&q.alternativas.length>=2&&Number.isInteger(q.correta));
+    const qs=all.slice(0,nT);
+    if(!qs.length)throw new Error("Não veio nenhuma questão válida. Tente novamente.");
+    Q=qs; mode=$("mode").value; meta={nome:$("nome").value.trim(),nivel:lv,tempo:+$("tm").value,modo:mode}; start(trunc);
+  }catch(e){
+    const c=e&&e.code;
+    showErr("Erro ao gerar: "+((e&&e.message)||e));
+  }finally{btn.disabled=false;btn.textContent="Gerar simulado"}
+});
+
+function start(trunc){
+  P=Q.map(()=>null);R=[];done=false;
+  const o=$("out");o.hidden=false;o.innerHTML="";
+  if(trunc)o.appendChild(el("p","hint","Aviso: o conteúdo era grande, usei só os primeiros "+MAX.toLocaleString("pt-BR")+" caracteres."));
+  const pr=el("div","prog");const pt=el("span");pr.appendChild(pt);
+  const fb=el("button","",mode==="simulado"?"Finalizar e corrigir":"Encerrar");fb.onclick=()=>{
+    const b=P.filter(x=>x===null).length;
+    if(b&&mode==="simulado"&&!confirm(b+" questão(ões) sem resposta serão contadas como erro. Finalizar?"))return;
+    finish()};
+  pr.appendChild(fb);o.appendChild(pr);
+  clearInterval(T);t0=Date.now();tl="";
+  const lim=mode==="simulado"?(+meta.tempo||0)*60:0;
+  const upd=()=>{pt.textContent=P.filter(x=>x!==null).length+" de "+Q.length+" respondidas"+tl};upd();
+  if(lim){const tick=()=>{const left=lim-Math.floor((Date.now()-t0)/1000);if(left<=0){finish(true);return}tl="  ·  ⏱ "+fmt(left);upd()};tick();T=setInterval(tick,1000)}
+  Q.forEach((q,i)=>{
+    const c=el("div","card q");
+    if(q.texto){const t=el("div","txt");t.append(el("b","","Leia o texto: "),q.texto);c.appendChild(t)}const h=el("h3",null,(i+1)+". "+q.enunciado);
+    if(q.tema)h.appendChild(el("small","","  · "+q.tema));c.appendChild(h);
+    const bs=q.alternativas.map((a,j)=>{
+      const b=el("button","opt",L(j)+") "+String(a).replace(/^[A-Da-d][\)\.]\s*/,""));
+      b.onclick=()=>{
+        if(done)return;
+        if(mode==="treino"){if(P[i]!==null)return;P[i]=j;reveal(i);upd();if(P.every(x=>x!==null))finish()}
+        else{P[i]=j;bs.forEach((x,k)=>x.classList.toggle("sel",k===j));upd()}
+      };
+      c.appendChild(b);return b});
+    const ex=el("div","exp");ex.hidden=true;c.appendChild(ex);
+    R[i]={bs,ex,c};o.appendChild(c);
+  });
+  const f=el("div","card");f.id="fin";f.hidden=true;o.appendChild(f);
+  o.scrollIntoView({behavior:"smooth"});
+}
+
+function reveal(i){
+  const q=Q[i],{bs,ex,c}=R[i],p=P[i];
+  bs.forEach((b,k)=>{b.disabled=true;b.classList.remove("sel");
+    if(k===q.correta)b.classList.add("ok");else if(k===p)b.classList.add("er");
+    const w=q.porque&&q.porque[k];
+    if(w){const d=el("div","why",w);b.after(d)}});
+  ex.innerHTML="";
+  const st=p===null?["Em branco","er"]:p===q.correta?["✓ Você acertou","ok"]:["✗ Você errou — a correta era "+L(q.correta),"er"];
+  ex.appendChild(el("div","st "+st[1],st[0]));
+  if(q.explicacao)ex.appendChild(el("div","",q.explicacao));
+  ex.hidden=false;
+}
+
+function finish(auto){
+  if(done)return;done=true;clearInterval(T);meta.gasto=Math.floor((Date.now()-t0)/1000);
+  Q.forEach((_,i)=>reveal(i));
+  const hits=Q.filter((q,i)=>P[i]===q.correta).length;
+  const f=$("fin");f.hidden=false;f.innerHTML="";
+  f.appendChild(el("div","score","Você acertou "+hits+" de "+Q.length+" ("+Math.round(hits/Q.length*100)+"%)"));
+  const ti=el("p","hint",(auto===true?"⏱ Tempo esgotado: simulado encerrado automaticamente. ":"")+"Tempo gasto: "+fmt(meta.gasto));ti.style.textAlign="center";f.appendChild(ti);
+  const b=el("div","bar");
+  const pdf=el("button","p","⬇ Baixar PDF com questões e respostas");pdf.style.width="auto";pdf.style.marginTop="0";
+  const pe=el("div","msg");pe.hidden=true;
+  pdf.hidden=!dl;pdf.onclick=async()=>{
+    pe.hidden=true;let step="gerar o arquivo";
+    try{
+      if(!(window.jspdf&&window.jspdf.jsPDF))throw new Error("a biblioteca de PDF não carregou (recarregue a página)");
+      const data=makePDF(hits);step="salvar o arquivo";
+      const u=URL.createObjectURL(new Blob([data],{type:"application/pdf"})),a=document.createElement("a");a.href=u;a.download="simulado.pdf";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+    }catch(e){if(e&&e.code==="declined")return;
+      pe.textContent="Não consegui "+step+": "+((e&&((e.code?e.code+" - ":"")+e.message))||e);pe.hidden=false}};
+  const r=el("button","","Refazer");r.onclick=()=>{start(false);window.scrollTo({top:0,behavior:"smooth"})};
+  const n=el("button","","Novo conteúdo");n.onclick=()=>{$("out").hidden=true;window.scrollTo({top:0,behavior:"smooth"})};
+  b.append(pdf,r,n);f.appendChild(b);f.appendChild(pe);
+  f.scrollIntoView({behavior:"smooth"});
+}
+
+function clean(s){return String(s==null?"":s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,"-").replace(/\u2026/g,"...").replace(/[\u2192\u2794]/g,"->").replace(/\s+/g," ").replace(/[^\x20-\x7E\xA0-\xFF]/g,"?")}
+
+function makePDF(hits){
+  const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  const M=15,W=180,G=[47,93,80],OK=[31,122,69],ER=[179,38,30],OKB=[229,244,234],ERB=[251,233,231],GR=[90,90,90];
+  const N=Q.length,br=P.filter(x=>x===null).length,er=N-hits-br,pct=Math.round(hits/N*100);
+  let y=0;
+  const np=()=>{doc.addPage();y=18};
+  const wrap=(t,sz,b,w)=>{doc.setFont("helvetica",b?"bold":"normal");doc.setFontSize(sz);return doc.splitTextToSize(clean(t),w)};
+  const ln=(t,sz,b,col,ind)=>{const ls=wrap(t,sz,b,W-(ind||0)),lh=sz*0.42+1;doc.setTextColor(...(col||[30,30,30]));ls.forEach(x=>{if(y>282)np();doc.text(x,M+(ind||0),y);y+=lh})};
+  doc.setFillColor(...G);doc.rect(0,0,210,34,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(22);doc.text("Mestre das provas",M,16);
+  doc.setFont("helvetica","normal");doc.setFontSize(10);
+  doc.text(clean((meta.nome?"Aluno: "+meta.nome+"   |   ":"")+"Data: "+new Date().toLocaleDateString("pt-BR")+"   |   Nivel: "+meta.nivel),M,26);
+  y=44;
+  doc.setFillColor(245,244,240);doc.roundedRect(M,y,W,24,3,3,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(24);doc.setTextColor(...(pct>=60?OK:ER));doc.text(pct+"%",M+6,y+15);
+  doc.setFontSize(11);doc.setTextColor(30,30,30);doc.text("Acertos: "+hits+" de "+N,M+42,y+10);
+  doc.setFont("helvetica","normal");doc.setFontSize(10);doc.setTextColor(...GR);doc.text("Erros: "+er+"   |   Em branco: "+br,M+42,y+17);
+  if(meta.gasto!=null)doc.text("Tempo: "+fmt(meta.gasto),M+W-6,y+10,{align:"right"});
+  y+=34;
+  Q.forEach((q,i)=>{
+    const p=P[i],ok=p===q.correta,col=p===null?GR:ok?OK:ER;
+    if(y>235)np();
+    doc.setFillColor(...col);doc.roundedRect(M,y-4.4,26,6.4,1.6,1.6,"F");
+    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(8.5);
+    doc.text(p===null?"EM BRANCO":ok?"ACERTOU":"ERROU",M+13,y,{align:"center"});
+    doc.setTextColor(30,30,30);doc.setFontSize(11);doc.text("Questao "+(i+1),M+30,y);
+    y+=6;
+    if(q.texto){ln("Texto: "+q.texto,9.5,false,GR,4);y+=2}
+    ln(q.enunciado,10.5,true);y+=1;
+    q.alternativas.forEach((a,j)=>{
+      const tag=(j===q.correta?"   [GABARITO]":"")+(j===p?"   [SUA RESPOSTA]":"");
+      const isC=j===q.correta,isW=j===p&&!isC,b=isC||j===p;
+      const ls=wrap(L(j)+") "+String(a).replace(/^[A-Da-d][\)\.]\s*/,"")+tag,10,b,W-8),h=ls.length*5.2+1.6;
+      if(y+h>284)np();
+      if(isC||isW){doc.setFillColor(...(isC?OKB:ERB));doc.roundedRect(M,y-4.2,W,h,1.5,1.5,"F")}
+      doc.setTextColor(...(isC?OK:isW?ER:[30,30,30]));
+      ls.forEach((x,k)=>doc.text(x,M+3,y+k*5.2));
+      y+=h+1;
+    });
+    y+=1;
+    if(p!==null&&!ok&&q.porque&&q.porque[p])ln("Por que sua resposta esta errada: "+q.porque[p],9.5,false,ER);
+    if(q.explicacao)ln("Explicacao: "+q.explicacao,9.5,false,GR);
+    y+=2;doc.setDrawColor(221,219,211);doc.line(M,y,M+W,y);y+=8;
+  });
+  const n=doc.getNumberOfPages();
+  for(let k=1;k<=n;k++){doc.setPage(k);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text("Mestre das provas  -  pagina "+k+" de "+n,105,291,{align:"center"})}
+  return doc.output("arraybuffer");
+}
+</script>
+</body>
+</html>

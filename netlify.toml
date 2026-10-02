@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/gerar"
+  to = "/.netlify/functions/gerar"
+  status = 200
