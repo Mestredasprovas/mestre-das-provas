@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const SB = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const LIMITE = +process.env.LIMITE_POR_HORA || 20; // chamadas por visitante por hora
-const MODELO = process.env.MODELO || 'claude-haiku-4-5-20251001';
+const MODELO = process.env.MODELO || 'gemini-3.1-flash-lite';
 const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 const NIVEIS = ['intermediário', 'avançado', 'concurso/residência (muito difícil)'];
 const out = (c, o) => ({ statusCode: c, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o) });
@@ -41,14 +41,19 @@ exports.handler = async (ev) => {
   const ac = new AbortController();
   const to = setTimeout(() => ac.abort(), 25000);
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`, {
       method: 'POST', signal: ac.signal,
-      headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODELO, max_tokens: 4000, messages: [{ role: 'user', content: mk(texto, n, nivel) }] })
+      headers: { 'x-goog-api-key': process.env.GEMINI_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: mk(texto, n, nivel) }] }],
+        generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 8000, temperature: 0.7 }
+      })
     });
     const j = await r.json();
+    if (r.status === 429) return out(429, { erro: 'O gerador gratuito atingiu o limite agora. Tente de novo em alguns minutos.' });
     if (!r.ok) return out(502, { erro: 'Erro no gerador: ' + ((j.error && j.error.message) || r.status) });
-    const txt = (j.content || []).map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
+    const parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    const txt = parts.map(c => c.text || '').join('').replace(/```json|```/g, '').trim();
     const p = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
     return out(200, { questoes: p.questoes || [] });
   } catch (e) {
