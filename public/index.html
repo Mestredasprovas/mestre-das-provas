@@ -27,7 +27,7 @@ button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--bd)
 button.p{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600;width:100%;margin-top:16px;padding:12px}
 button:disabled{opacity:.6;cursor:default}
 .hint{font-size:.82rem;color:var(--mu);margin-top:6px}
-.q h3{font-size:1.02rem;margin:0 0 12px}
+.q h3{font-size:1.02rem;margin:0 0 12px;white-space:pre-wrap}
 .q small{color:var(--mu);font-weight:400}
 .opt{display:block;width:100%;text-align:left;margin-bottom:8px;padding:11px 13px}
 .opt.sel{background:var(--sel);border-color:var(--ac)}
@@ -48,14 +48,14 @@ button:disabled{opacity:.6;cursor:default}
 <body>
 <main>
 <h1>🎓 Mestre das provas</h1>
-<p class="sub">Transforme qualquer matéria em simulado. Cole o texto ou envie o arquivo, responda as questões, veja a correção comentada e baixe o PDF. Sem cadastro.</p>
+<p class="sub">Transforme qualquer matéria em simulado. Cole o texto ou envie o arquivo (PDF com imagens e fotos também), responda as questões, veja a correção comentada e baixe o PDF. Sem cadastro.</p>
 
 <section class="card" id="inp">
   <label for="txt">Conteúdo da matéria</label>
   <textarea id="txt" placeholder="Cole aqui o texto: resumo, slides, apostila, capítulo de livro..."></textarea>
   <div class="hint" id="cc"></div>
   <div class="row">
-    <div><label for="file">Ou envie um arquivo</label><input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.html"><div class="hint" id="fh">PDF, DOCX, TXT ou MD</div></div>
+    <div><label for="file">Ou envie um arquivo</label><input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.html,.png,.jpg,.jpeg,.webp"><div class="hint" id="fh">PDF (inclusive escaneado ou com imagens), DOCX, TXT, MD ou foto (JPG/PNG)</div></div>
     <div><label for="mode">Modo</label><select id="mode"><option value="simulado" selected>Simulado (corrige no final)</option><option value="treino">Treino (corrige a cada questão)</option></select></div>
   </div>
   <div class="row">
@@ -84,73 +84,182 @@ $("txt").addEventListener("input",cnt);cnt();
 function showErr(m){const e=$("err");e.textContent=m;e.hidden=!m}
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 
+const DICA="PDF (inclusive escaneado ou com imagens), DOCX, TXT, MD ou foto (JPG/PNG)";
+const OCR_LOTE=5, OCR_MAX=24, OCR_PAR=2, PORLOTE=3;
+let gerando=false;
+const esperar=ms=>new Promise(r=>setTimeout(r,ms));
+async function pool(itens,lim,fn){
+  const res=new Array(itens.length);let i=0;
+  await Promise.all(Array.from({length:Math.min(lim,itens.length)},async()=>{while(i<itens.length){const k=i++;res[k]=await fn(itens[k],k)}}));
+  return res}
+const semMarcas=s=>String(s||"").replace(/^\s*=== P[áa]gina \d+ ===\s*$/gm,"\n").replace(/\n{3,}/g,"\n\n").trim();
+
+/* ---------- leitura de imagens (páginas escaneadas, slides, fotos) pelo Gemini ---------- */
+async function lerImagens(lote,de){
+  let erro="";
+  for(let a=0;a<3;a++){
+    try{
+      const r=await fetch("/.netlify/functions/ler",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imagens:lote,de})});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.texto)return d.texto;
+      erro=d.erro||("Erro "+r.status);
+      if(d.codigo==="limite"||d.codigo==="chave"||r.status===400||r.status===413)break;
+    }catch(e){erro="Falha de conexão com o servidor."}
+    await esperar(2500*(a+1));
+  }
+  throw new Error(erro)}
+async function paginaParaJpeg(pg){
+  const v0=pg.getViewport({scale:1}), s=Math.min(2.5,1600/Math.max(v0.width,v0.height)), vp=pg.getViewport({scale:s});
+  const cv=document.createElement("canvas");cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+  const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);
+  await pg.render({canvasContext:cx,viewport:vp}).promise;
+  let b="";for(const q of [.72,.55,.4]){b=cv.toDataURL("image/jpeg",q).split(",")[1];if(b.length<=1.0e6)break}   // até ~1 MB por página
+  cv.width=cv.height=0;pg.cleanup();return b}
+async function lerPDF(f,msg){
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+  const O=pdfjsLib.OPS, imgOps=new Set([O.paintImageXObject,O.paintInlineImageXObject,O.paintImageMaskXObject,O.paintJpegXObject].filter(x=>x!==undefined));
+  const pags=[];let tot=0;
+  for(let i=1;i<=pdf.numPages&&tot<MAX*2;i++){
+    msg("Lendo página "+i+" de "+pdf.numPages+"...");
+    const pg=await pdf.getPage(i);
+    const tx=(await pg.getTextContent()).items.map(x=>x.str).join(" ").replace(/\s+/g," ").trim();
+    let img=tx.length<120;                       // quase sem texto: página escaneada ou só imagem
+    if(!img&&tx.length<900){const ops=await pg.getOperatorList();img=ops.fnArray.some(fn=>imgOps.has(fn))} // pouco texto + figuras (slides)
+    pags.push({i,tx,img,pg});tot+=tx.length;
+  }
+  const comImg=pags.filter(p=>p.img), alvo=comImg.slice(0,OCR_MAX), puladas=comImg.length-alvo.length;
+  const lotes=[];for(let k=0;k<alvo.length;k+=OCR_LOTE)lotes.push(alvo.slice(k,k+OCR_LOTE));
+  let lidas=0,falhas=0,erroOcr="";
+  if(lotes.length){
+    msg("Lendo as imagens do PDF: 0 de "+alvo.length+" páginas...");
+    await pool(lotes,OCR_PAR,async lote=>{
+      try{
+        const b64=[];for(const p of lote)b64.push(await paginaParaJpeg(p.pg));
+        const txt=await lerImagens(b64,lote[0].i);
+        const partes=txt.split(/^\s*=== P[áa]gina \d+ ===\s*$/m).map(s=>s.trim()).filter(Boolean);
+        if(partes.length===lote.length)lote.forEach((p,k)=>{p.ocr=partes[k]});
+        else{lote[0].ocr=semMarcas(txt);lote.slice(1).forEach(p=>{p.ocr=""})}
+      }catch(e){falhas+=lote.length;erroOcr=e.message||String(e)}
+      lidas+=lote.length;msg("Lendo as imagens do PDF: "+Math.min(lidas,alvo.length)+" de "+alvo.length+" páginas...");
+    });
+  }
+  const texto=pags.map(p=>p.ocr!==undefined?p.ocr:p.tx).filter(Boolean).join("\n\n");
+  let aviso="";
+  if(alvo.length)aviso+=" · "+(alvo.length-falhas)+" página(s) lida(s) por imagem";
+  if(falhas)aviso+=" · não consegui ler "+falhas+" página(s) com imagem ("+erroOcr+")";
+  if(puladas)aviso+=" · li só as primeiras "+OCR_MAX+" páginas com imagem ("+puladas+" ficaram de fora)";
+  if(!texto.trim()&&erroOcr)throw new Error(erroOcr);
+  return{texto,aviso}}
+async function lerFoto(f,msg){
+  msg("Lendo a imagem...");
+  const url=URL.createObjectURL(f);
+  const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error("imagem inválida"));i.src=url});
+  const s=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight));
+  const cv=document.createElement("canvas");cv.width=Math.round(im.naturalWidth*s);cv.height=Math.round(im.naturalHeight*s);
+  const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(url);
+  let b="";for(const q of [.78,.55,.4]){b=cv.toDataURL("image/jpeg",q).split(",")[1];if(b.length<=1.5e6)break}
+  return semMarcas(await lerImagens([b],1))}
+
 $("file").addEventListener("change",async ev=>{
   const f=ev.target.files[0]; if(!f)return;
-  const h=$("fh"); h.textContent="Lendo arquivo..."; showErr("");
+  const h=$("fh"), msg=m=>{h.textContent=m}; $("go").disabled=true; showErr("");
   try{
-    const ext=f.name.split(".").pop().toLowerCase(); let t="";
-    if(ext==="pdf"){
-      const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
-      for(let i=1;i<=pdf.numPages&&t.length<MAX*2;i++){const pg=await pdf.getPage(i);const c=await pg.getTextContent();t+=c.items.map(x=>x.str).join(" ")+"\n"}
-    }else if(ext==="docx"){
+    const ext=f.name.split(".").pop().toLowerCase(); let t="",aviso="";
+    if(ext==="pdf"){const r=await lerPDF(f,msg);t=r.texto;aviso=r.aviso}
+    else if(["png","jpg","jpeg","webp"].includes(ext)){t=await lerFoto(f,msg);aviso=" · lido por imagem"}
+    else if(ext==="docx"){
+      msg("Lendo arquivo...");
       t=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
     }else{
+      msg("Lendo arquivo...");
       t=await f.text();
       if(ext==="html")t=new DOMParser().parseFromString(t,"text/html").body.textContent;
     }
     t=t.trim();
-    if(t.length<50)throw new Error("Pouco texto extraído (PDF escaneado?). Cole o texto manualmente.");
-    $("txt").value=t;cnt(); h.textContent="✓ "+f.name+" ("+t.length.toLocaleString("pt-BR")+" caracteres)";
-  }catch(e){h.textContent="PDF, DOCX, TXT ou MD"; showErr("Não consegui ler o arquivo: "+(e.message||e))}
+    if(t.length<50)throw new Error("Não encontrei texto legível nesse arquivo. Cole o texto manualmente.");
+    $("txt").value=t;cnt(); h.textContent="✓ "+f.name+" ("+t.length.toLocaleString("pt-BR")+" caracteres)"+aviso;
+  }catch(e){h.textContent=DICA; showErr("Não consegui ler o arquivo: "+(e.message||e))}
+  finally{$("go").disabled=gerando}
 });
 
-const mk=(t,n,lv)=>`Você é professor universitário e elaborador de provas. Com base APENAS no conteúdo abaixo, crie ${n} questões objetivas de múltipla escolha, nível ${lv}, com 4 alternativas e exatamente uma correta.
-Regras: exigir análise, aplicação, comparação ou raciocínio (não só memorização); distratores plausíveis; variar a posição da correta; não repetir questões; enunciados claros, no idioma do conteúdo.
-REGRA IMPORTANTE: se o enunciado disser "segundo o texto", "de acordo com o texto", "com base no texto", "o trecho", "o autor" ou qualquer referência a um texto, inclua obrigatoriamente no campo "texto" o trecho completo (2 a 8 frases, fiel ao conteúdo) a que a questão se refere. Nunca cite um texto que não esteja no campo "texto". Se a questão não se refere a um texto, use "texto":"".
-Para cada questão inclua "explicacao" (por que a alternativa correta está certa, 1-3 frases) e "porque": lista de 4 frases curtas, na ordem das alternativas, dizendo por que cada alternativa está certa ou errada.
-Responda SOMENTE com JSON: {"questoes":[{"texto":"...","enunciado":"...","alternativas":["...","...","...","..."],"correta":0,"explicacao":"...","porque":["...","...","...","..."],"tema":"..."}]} ("correta" = índice 0-3; alternativas sem prefixo de letra).
-
-CONTEÚDO:
-"""
-${t}
-"""`;
-function chunks(t){
-  const enc=new TextEncoder(),LIM=52000,B=x=>enc.encode(x).length;
-  const ps=[];t.split(/\n+/).forEach(p=>{while(B(p)>20000){ps.push(p.slice(0,8000));p=p.slice(8000)}ps.push(p)});
+/* ---------- geração: lotes com trechos e ângulos diferentes, sem repetir questões ---------- */
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]+/g," ");
+const toks=s=>new Set(norm(s).split(/\s+/).filter(w=>w.length>3));
+function parecida(a,b){if(!a.size||!b.size)return false;let i=0;a.forEach(w=>{if(b.has(w))i++});return i/(a.size+b.size-i)>=.6}
+function valida(q){return !!(q&&q.enunciado&&Array.isArray(q.alternativas)&&q.alternativas.length>=4&&Number.isInteger(q.correta)&&q.correta>=0&&q.correta<q.alternativas.length)}
+function juntar(base,novas){            // acrescenta só as questões que não repetem as já aceitas
+  const out=base.slice(),ts=out.map(q=>toks(q.enunciado));
+  novas.filter(valida).forEach(q=>{const t=toks(q.enunciado);if(!ts.some(x=>parecida(x,t))){out.push(q);ts.push(t)}});
+  return out}
+function partir(p,max){const r=[];while(p.length>max){let c=p.lastIndexOf(". ",max);if(c<max*.5)c=p.lastIndexOf(" ",max);if(c<max*.5)c=max;r.push(p.slice(0,c+1));p=p.slice(c+1)}r.push(p);return r}
+function dividir(t,S){                  // S trechos contíguos de tamanho parecido, quebrando em parágrafos
+  if(S<=1)return[t];
+  const alvo=Math.ceil(t.length/S),ps=[];
+  t.split(/\n+/).forEach(p=>partir(p,alvo).forEach(x=>ps.push(x)));
   const out=[];let cur="";
-  ps.forEach(p=>{if(cur&&B(cur)+B(p)+1>LIM){out.push(cur);cur=p}else cur=cur?cur+"\n"+p:p});
+  ps.forEach(p=>{if(cur&&cur.length+p.length+1>alvo&&out.length<S-1){out.push(cur);cur=p}else cur=cur?cur+"\n"+p:p});
   if(cur)out.push(cur);return out}
+function planejar(t,n){
+  const L=t.length;
+  const B=Math.min(n,Math.max(Math.ceil(n/PORLOTE),Math.ceil(L/32000)));   // nº de chamadas
+  const S=Math.max(1,Math.min(B,Math.floor(L/3000)));                      // nº de trechos diferentes do material
+  const segs=dividir(t,S),jobs=[];let ini=0;
+  for(let k=0;k<B;k++){const q=Math.floor(n/B)+(k<n%B?1:0);jobs.push({texto:segs[k%segs.length],n:q,inicio:ini,parte:k%segs.length+1,partes:segs.length});ini+=q}
+  return{jobs,segs}}
+async function pedir(corpo){
+  let erro="";
+  for(let a=0;a<2;a++){
+    try{
+      const r=await fetch("/api/gerar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corpo)});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok)return{q:d.questoes||[]};
+      erro=d.erro||("Erro "+r.status);
+      if(d.codigo==="limite"||d.codigo==="chave"||r.status===400)return{erro,fatal:true};
+    }catch(e){erro="Falha de conexão com o servidor."}
+    if(a===0)await esperar(4000);
+  }
+  return{erro}}
 $("go").addEventListener("click",async()=>{
   showErr("");
   let t=$("txt").value.trim();
   if(t.length<100){showErr("Coloque um conteúdo com pelo menos alguns parágrafos.");return}
   let trunc=t.length>MAX; if(trunc)t=t.slice(0,MAX);
-  const btn=$("go"); btn.disabled=true; btn.textContent="Gerando... (pode levar até 1 minuto)";
+  const btn=$("go"); gerando=true; btn.disabled=true; btn.textContent="Gerando... (pode levar até 1 minuto)";
   try{
-    const n=$("n").value, lv=$("lv").value;
-    const c0=chunks(t),cs=c0.slice(0,4);if(c0.length>4)trunc=true;
-    const nT=+n,jobs=[];
-    for(let k=0,r=nT;r>0;k++){const q=Math.min(4,r);jobs.push({texto:cs[k%cs.length],n:q});r-=q}
-    let done_=0;btn.textContent="Gerando... 0 de "+jobs.length;
-    const rs=await Promise.all(jobs.map(async jb=>{
-      const resp=await fetch("/api/gerar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({texto:jb.texto,n:jb.n,nivel:lv})});
-      const d=await resp.json().catch(()=>({}));
-      if(!resp.ok)throw new Error(d.erro||"Erro "+resp.status);
-      btn.textContent="Gerando... "+(++done_)+" de "+jobs.length;return d.questoes||[]}));
-    const all=[].concat(...rs).filter(q=>q&&q.enunciado&&Array.isArray(q.alternativas)&&q.alternativas.length>=2&&Number.isInteger(q.correta));
-    const qs=all.slice(0,nT);
-    if(!qs.length)throw new Error("Não veio nenhuma questão válida. Tente novamente.");
-    Q=qs; mode=$("mode").value; meta={nome:$("nome").value.trim(),nivel:lv,tempo:+$("tm").value,modo:mode}; start(trunc);
+    const nT=+$("n").value, lv=$("lv").value;
+    const{jobs,segs}=planejar(t,nT);
+    let feitos=0,total=jobs.length;
+    const prog=()=>{btn.textContent="Gerando... "+Math.min(feitos,total)+" de "+total+" partes"};prog();
+    const rodar=(js,evitar)=>pool(js,4,async jb=>{
+      const r=await pedir({texto:jb.texto,n:jb.n,nivel:lv,inicio:jb.inicio,parte:jb.parte,partes:jb.partes,evitar});
+      feitos++;prog();return r});
+    let rs=await rodar(jobs,[]);
+    let qs=juntar([],rs.flatMap(r=>r.q||[])),erros=rs.filter(r=>r.erro).map(r=>r.erro),fatal=rs.some(r=>r.fatal);
+    // reposição: se faltaram questões (falha ou repetidas), pede só o que falta, mostrando as já criadas
+    for(let rodada=0;rodada<2&&qs.length<nT&&!fatal;rodada++){
+      const falta=nT-qs.length,B2=Math.ceil(falta/PORLOTE),js=[];let ini=nT+rodada*20;
+      for(let k=0;k<B2;k++){const q=Math.floor(falta/B2)+(k<falta%B2?1:0),s=(k+rodada+qs.length)%segs.length;js.push({texto:segs[s],n:q,inicio:ini,parte:s+1,partes:segs.length});ini+=q}
+      total+=js.length;prog();
+      const rs2=await rodar(js,qs.map(q=>String(q.enunciado).replace(/\s+/g," ").slice(0,140)));
+      const antes=qs.length;qs=juntar(qs,rs2.flatMap(r=>r.q||[]));
+      erros=erros.concat(rs2.filter(r=>r.erro).map(r=>r.erro));fatal=rs2.some(r=>r.fatal);
+      if(qs.length===antes&&rs2.every(r=>r.erro))break;
+    }
+    qs=qs.slice(0,nT);
+    if(!qs.length)throw new Error(erros[0]||"Não veio nenhuma questão válida. Tente novamente.");
+    const extra=qs.length<nT?"Aviso: consegui gerar "+qs.length+" de "+nT+" questões ("+(erros[0]?erros[0]:"o gerador repetiu pontos do conteúdo")+"). Clique em Gerar simulado de novo para tentar completar.":"";
+    Q=qs; mode=$("mode").value; meta={nome:$("nome").value.trim(),nivel:lv,tempo:+$("tm").value,modo:mode}; start(trunc,extra);
   }catch(e){
-    const c=e&&e.code;
     showErr("Erro ao gerar: "+((e&&e.message)||e));
-  }finally{btn.disabled=false;btn.textContent="Gerar simulado"}
+  }finally{gerando=false;btn.disabled=false;btn.textContent="Gerar simulado"}
 });
 
-function start(trunc){
+
+function start(trunc,extra){
   P=Q.map(()=>null);R=[];done=false;
   const o=$("out");o.hidden=false;o.innerHTML="";
   if(trunc)o.appendChild(el("p","hint","Aviso: o conteúdo era grande, usei só os primeiros "+MAX.toLocaleString("pt-BR")+" caracteres."));
+  if(extra)o.appendChild(el("p","hint",extra));
   const pr=el("div","prog");const pt=el("span");pr.appendChild(pt);
   const fb=el("button","",mode==="simulado"?"Finalizar e corrigir":"Encerrar");fb.onclick=()=>{
     const b=P.filter(x=>x===null).length;
@@ -166,7 +275,7 @@ function start(trunc){
     if(q.texto){const t=el("div","txt");t.append(el("b","","Leia o texto: "),q.texto);c.appendChild(t)}const h=el("h3",null,(i+1)+". "+q.enunciado);
     if(q.tema)h.appendChild(el("small","","  · "+q.tema));c.appendChild(h);
     const bs=q.alternativas.map((a,j)=>{
-      const b=el("button","opt",L(j)+") "+String(a).replace(/^[A-Da-d][\)\.]\s*/,""));
+      const b=el("button","opt",L(j)+") "+String(a).replace(/^[A-Ea-e][\)\.]\s+/,""));
       b.onclick=()=>{
         if(done)return;
         if(mode==="treino"){if(P[i]!==null)return;P[i]=j;reveal(i);upd();if(P.every(x=>x!==null))finish()}
@@ -217,7 +326,7 @@ function finish(auto){
   f.scrollIntoView({behavior:"smooth"});
 }
 
-function clean(s){return String(s==null?"":s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,"-").replace(/\u2026/g,"...").replace(/[\u2192\u2794]/g,"->").replace(/\s+/g," ").replace(/[^\x20-\x7E\xA0-\xFF]/g,"?")}
+function clean(s){return String(s==null?"":s).replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,"-").replace(/\u2026/g,"...").replace(/[\u2192\u2794]/g,"->").replace(/[ \t\r\f\v]+/g," ").replace(/ ?\n ?/g,"\n").replace(/\n{3,}/g,"\n\n").replace(/[^\n\x20-\x7E\xA0-\xFF]/g,"?")}
 
 function makePDF(hits){
   const doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
@@ -251,7 +360,7 @@ function makePDF(hits){
     q.alternativas.forEach((a,j)=>{
       const tag=(j===q.correta?"   [GABARITO]":"")+(j===p?"   [SUA RESPOSTA]":"");
       const isC=j===q.correta,isW=j===p&&!isC,b=isC||j===p;
-      const ls=wrap(L(j)+") "+String(a).replace(/^[A-Da-d][\)\.]\s*/,"")+tag,10,b,W-8),h=ls.length*5.2+1.6;
+      const ls=wrap(L(j)+") "+String(a).replace(/^[A-Ea-e][\)\.]\s+/,"")+tag,10,b,W-8),h=ls.length*5.2+1.6;
       if(y+h>284)np();
       if(isC||isW){doc.setFillColor(...(isC?OKB:ERB));doc.roundedRect(M,y-4.2,W,h,1.5,1.5,"F")}
       doc.setTextColor(...(isC?OK:isW?ER:[30,30,30]));
