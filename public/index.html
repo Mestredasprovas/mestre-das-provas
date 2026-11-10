@@ -3,10 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mestre das provas</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>Mestre das Provas: gerador de simulados com IA</title>
+<meta name="description" content="Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro.">
+<link rel="canonical" href="https://omestredasprovas.netlify.app/">
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161715" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="application-name" content="Mestre das Provas">
+<!-- Google Search Console: se escolher a verificação por tag HTML, cole aqui a tag que o Google mostrar, por exemplo:
+<meta name="google-site-verification" content="CODIGO_QUE_O_GOOGLE_FORNECER">
+-->
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mestre das Provas">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://omestredasprovas.netlify.app/">
+<meta property="og:title" content="Mestre das Provas: gere simulados com IA a partir do seu material">
+<meta property="og:description" content="Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro.">
+<meta property="og:image" content="https://omestredasprovas.netlify.app/img/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mestre das Provas, gerador de simulados com IA: ao lado do título, uma questão de múltipla escolha com a alternativa correta em verde.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mestre das Provas: gere simulados com IA a partir do seu material">
+<meta name="twitter:description" content="Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro.">
+<meta name="twitter:image" content="https://omestredasprovas.netlify.app/img/og-image.jpg">
+<meta name="twitter:image:alt" content="Mestre das Provas, gerador de simulados com IA: ao lado do título, uma questão de múltipla escolha com a alternativa correta em verde.">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebSite",
+   "@id": "https://omestredasprovas.netlify.app/#site",
+   "url": "https://omestredasprovas.netlify.app/",
+   "name": "Mestre das Provas",
+   "inLanguage": "pt-BR",
+   "description": "Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro."
+  },
+  {
+   "@type": "WebApplication",
+   "@id": "https://omestredasprovas.netlify.app/#app",
+   "name": "Mestre das Provas",
+   "url": "https://omestredasprovas.netlify.app/",
+   "description": "Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro.",
+   "applicationCategory": "EducationalApplication",
+   "operatingSystem": "Qualquer sistema (navegador web)",
+   "browserRequirements": "Requer JavaScript",
+   "inLanguage": "pt-BR",
+   "isAccessibleForFree": true,
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL"
+   },
+   "image": "https://omestredasprovas.netlify.app/img/og-image.jpg",
+   "screenshot": "https://omestredasprovas.netlify.app/img/exemplo-simulado-1440.webp",
+   "featureList": [
+    "Gera questões de múltipla escolha a partir de texto, PDF, DOCX ou foto",
+    "Lê PDFs escaneados e páginas com imagens (OCR com IA)",
+    "Cinco alternativas por questão no formato de provas de graduação",
+    "Modo simulado com tempo limite e modo treino",
+    "Correção comentada com o motivo de cada alternativa",
+    "PDF com questões e respostas para baixar"
+   ],
+   "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student"
+   }
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://omestredasprovas.netlify.app/#faq",
+   "inLanguage": "pt-BR",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Preciso de cadastro para usar o Mestre das Provas?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Não. Você usa direto no navegador, sem criar conta e sem login. Para manter o serviço estável, existe um limite de uso por hora para cada visitante."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Como as questões são criadas?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Você envia o conteúdo da matéria e uma inteligência artificial (Google Gemini) elabora questões de múltipla escolha com cinco alternativas, usando apenas o seu material. Cada questão traz a resposta correta e a explicação de por que cada alternativa está certa ou errada."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Posso enviar PDF escaneado ou com imagens?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Sim. Páginas escaneadas, slides com figuras e fotos de páginas são lidos por reconhecimento de texto (OCR) com IA. O limite é de 24 páginas com imagem por arquivo, e o texto total pode ter até 150.000 caracteres."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Quais formatos de arquivo funcionam?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "PDF, DOCX, TXT, MD e fotos em JPG, PNG ou WEBP. Você também pode colar o texto direto na caixa de conteúdo."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Quantas questões posso gerar e quais níveis existem?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "De 5 a 20 questões por simulado, nos níveis intermediário, avançado ou muito difícil. No modo Simulado a correção vem no final, com tempo limite opcional; no modo Treino a correção aparece a cada questão."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "As questões estão sempre corretas?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Elas são geradas por inteligência artificial e podem conter erros. Use o simulado para treinar e confira sempre as respostas com a bibliografia da disciplina."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Meu material fica guardado?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "O texto ou arquivo é enviado ao serviço de IA apenas para gerar as questões e não é gravado no nosso banco de dados. Guardamos só um registro técnico de uso, sem o seu conteúdo, para aplicar o limite por hora. Veja a Política de Privacidade."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
 <style>
 :root{--bg:#f7f6f2;--card:#fff;--tx:#1d1d1b;--mu:#6b6a64;--bd:#dddbd3;--ac:#2f5d50;--acx:#fff;--ok:#1f7a45;--okb:#e5f4ea;--er:#b3261e;--erb:#fbe9e7;--sel:#e6efec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161715;--card:#1f211e;--tx:#ecebe6;--mu:#a3a29a;--bd:#33352f;--ac:#7fc2ad;--acx:#0f1a16;--ok:#7fd6a0;--okb:#173324;--er:#ff8a80;--erb:#3a1e1b;--sel:#26332e}}
@@ -43,12 +179,38 @@ button:disabled{opacity:.6;cursor:default}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;justify-content:center}
 .prog{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);padding:8px 0;font-size:.9rem;color:var(--mu);display:flex;justify-content:space-between;align-items:center;gap:8px}
 [hidden]{display:none!important}
+
+button:focus-visible,a:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.info{margin-top:36px}
+.info h2{font-size:1.25rem;margin:30px 0 8px}
+.info p{margin:0 0 12px}
+.steps{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));counter-reset:s}
+.steps li{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;counter-increment:s}
+.steps li:before{content:counter(s);display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ac);color:var(--acx);font-weight:700;margin-bottom:8px}
+.steps b{display:block;margin-bottom:4px}
+.steps span{color:var(--mu);font-size:.93rem}
+.info figure{margin:12px 0 0}
+.info figure img{display:block;width:100%;height:auto;border:1px solid var(--bd);border-radius:14px;background:var(--card)}
+.info figcaption{font-size:.82rem;color:var(--mu);margin-top:8px}
+details{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:0 14px;margin-bottom:8px}
+summary{cursor:pointer;font-weight:600;padding:13px 0}
+details[open] summary{border-bottom:1px solid var(--bd);margin-bottom:10px}
+details p{margin:0 0 13px;color:var(--mu)}
+footer.ft{margin-top:36px;padding-top:16px;border-top:1px solid var(--bd);text-align:center;font-size:.85rem;color:var(--mu)}
+footer.ft p{margin:0 0 6px}
+a,.lnk{color:var(--ac)}
+.lnk{background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;font:inherit}
+.ck{position:fixed;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.2);z-index:10}
+.ck p{margin:0 0 10px;font-size:.9rem}
+.ck .bt{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.ck button.p{width:auto;margin:0;padding:9px 16px}
 </style>
 </head>
 <body>
 <main>
-<h1>🎓 Mestre das provas</h1>
-<p class="sub">Transforme qualquer matéria em simulado. Cole o texto ou envie o arquivo (PDF com imagens e fotos também), responda as questões, veja a correção comentada e baixe o PDF. Sem cadastro.</p>
+<h1><span aria-hidden="true">🎓</span> Mestre das provas</h1>
+<p class="sub">Gerador de simulados com IA: transforme qualquer matéria em simulado. Cole o texto ou envie o arquivo (PDF com imagens e fotos também), responda as questões, veja a correção comentada e baixe o PDF. Sem cadastro.</p>
+<noscript><p class="msg">O Mestre das Provas precisa de JavaScript ativado para gerar os simulados.</p></noscript>
 
 <section class="card" id="inp">
   <label for="txt">Conteúdo da matéria</label>
@@ -69,7 +231,40 @@ button:disabled{opacity:.6;cursor:default}
 </section>
 
 <section id="out" hidden></section>
-<p class="hint" style="text-align:center;margin-top:24px">Mestre das provas · questões geradas por IA a partir do seu material. Confira sempre com a bibliografia da disciplina.</p>
+<section class="info" aria-labelledby="h-estude">
+<h2 id="h-estude">Estude com o seu próprio material</h2>
+<p>O Mestre das Provas é um gerador de simulados com IA para estudantes de graduação, concursos e residência: transforme resumos, slides, apostilas e capítulos de livros em questões de múltipla escolha para treinar antes da prova.</p>
+
+<h2>Como funciona</h2>
+<ol class="steps">
+<li><b>Envie o conteúdo</b><span>Cole o texto ou envie um PDF, DOCX, TXT ou foto da matéria. PDFs escaneados e slides com imagens também funcionam.</span></li>
+<li><b>Escolha o formato</b><span>Defina de 5 a 20 questões, o nível de dificuldade e o modo: simulado com correção no final ou treino com correção a cada questão.</span></li>
+<li><b>Responda e aprenda</b><span>Veja a correção comentada, entenda por que cada alternativa está certa ou errada e baixe o PDF com questões e respostas.</span></li>
+</ol>
+
+<h2>Questões no formato de prova</h2>
+<p>As questões seguem o formato das provas de graduação: casos práticos, afirmativas numeradas (I, II, III), lacunas, perguntas conceituais e cálculos, sempre com cinco alternativas (A a E) e distratores plausíveis.</p>
+
+<h2>Veja como fica o simulado</h2>
+<figure>
+<img src="/img/exemplo-simulado-720.webp" srcset="/img/exemplo-simulado-720.webp 720w, /img/exemplo-simulado-1440.webp 1440w" sizes="(max-width: 760px) 92vw, 728px" width="720" height="707" loading="lazy" decoding="async" alt="Exemplo de questão do Mestre das Provas sobre custeio variável: cinco alternativas, a resposta correta destacada em verde, a explicação de por que cada alternativa está certa ou errada e a resolução comentada.">
+<figcaption>Exemplo de questão com correção comentada.</figcaption>
+</figure>
+
+<h2>Perguntas frequentes</h2>
+<details><summary>Preciso de cadastro para usar o Mestre das Provas?</summary><p>Não. Você usa direto no navegador, sem criar conta e sem login. Para manter o serviço estável, existe um limite de uso por hora para cada visitante.</p></details>
+<details><summary>Como as questões são criadas?</summary><p>Você envia o conteúdo da matéria e uma inteligência artificial (Google Gemini) elabora questões de múltipla escolha com cinco alternativas, usando apenas o seu material. Cada questão traz a resposta correta e a explicação de por que cada alternativa está certa ou errada.</p></details>
+<details><summary>Posso enviar PDF escaneado ou com imagens?</summary><p>Sim. Páginas escaneadas, slides com figuras e fotos de páginas são lidos por reconhecimento de texto (OCR) com IA. O limite é de 24 páginas com imagem por arquivo, e o texto total pode ter até 150.000 caracteres.</p></details>
+<details><summary>Quais formatos de arquivo funcionam?</summary><p>PDF, DOCX, TXT, MD e fotos em JPG, PNG ou WEBP. Você também pode colar o texto direto na caixa de conteúdo.</p></details>
+<details><summary>Quantas questões posso gerar e quais níveis existem?</summary><p>De 5 a 20 questões por simulado, nos níveis intermediário, avançado ou muito difícil. No modo Simulado a correção vem no final, com tempo limite opcional; no modo Treino a correção aparece a cada questão.</p></details>
+<details><summary>As questões estão sempre corretas?</summary><p>Elas são geradas por inteligência artificial e podem conter erros. Use o simulado para treinar e confira sempre as respostas com a bibliografia da disciplina.</p></details>
+<details><summary>Meu material fica guardado?</summary><p>O texto ou arquivo é enviado ao serviço de IA apenas para gerar as questões e não é gravado no nosso banco de dados. Guardamos só um registro técnico de uso, sem o seu conteúdo, para aplicar o limite por hora. Veja a <a href="/privacidade.html">Política de Privacidade</a>.</p></details>
+</section>
+
+<footer class="ft">
+<p>Mestre das Provas · questões geradas por IA a partir do seu material. Confira sempre com a bibliografia da disciplina.</p>
+<p><a href="/privacidade.html">Política de Privacidade</a><span id="ckpref-w" hidden> · <button type="button" class="lnk" id="ckpref">Preferências de cookies</button></span></p>
+</footer>
 </main>
 
 <script>
@@ -78,11 +273,49 @@ const MAX=150000, L=i=>String.fromCharCode(65+i);
 let Q=[],P=[],R=[],mode="simulado",done=false,dl=true,meta={},T=null,t0=0,tl="";
 const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 
-if(window.pdfjsLib){try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"}catch(e){}}
 function cnt(){$("cc").textContent=$("txt").value.length.toLocaleString("pt-BR")+" / "+MAX.toLocaleString("pt-BR")+" caracteres"}
 $("txt").addEventListener("input",cnt);cnt();
 function showErr(m){const e=$("err");e.textContent=m;e.hidden=!m}
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+
+/* ---------- bibliotecas pesadas: só carregam quando precisam (página abre mais rápido) ---------- */
+const LIBS={pdf:["/vendor/pdf-3.11.174.min.js",()=>window.pdfjsLib],mammoth:["/vendor/mammoth-1.6.0.min.js",()=>window.mammoth],jspdf:["/vendor/jspdf-2.5.1.umd.min.js",()=>window.jspdf&&window.jspdf.jsPDF]};
+const _lp={};
+function lib(k){
+  const[src,ok]=LIBS[k];if(ok())return Promise.resolve();if(_lp[k])return _lp[k];
+  return _lp[k]=new Promise((res,rej)=>{
+    const s=document.createElement("script");s.src=src;s.async=true;
+    s.onload=()=>{if(k==="pdf"){try{pdfjsLib.GlobalWorkerOptions.workerSrc="/vendor/pdf.worker-3.11.174.min.js"}catch(e){}}res()};
+    s.onerror=()=>{delete _lp[k];rej(new Error("não consegui carregar a biblioteca de "+k+"; recarregue a página"))};
+    document.head.appendChild(s)})}
+
+/* ---------- Google Analytics 4 só com consentimento (LGPD) ---------- */
+const GA_ID="G-XXXXXXXXXX";   // ← troque pelo ID de métricas do seu GA4 (começa com G-). Enquanto estiver assim, nada é carregado e o aviso de cookies não aparece.
+const GA_ON=/^G-[A-Z0-9]{8,}$/.test(GA_ID)&&GA_ID!=="G-XXXXXXXXXX";
+let gaOk=false;
+const ckGet=()=>{try{return localStorage.getItem("mp_consent")}catch(e){return null}};
+const ckSet=v=>{try{localStorage.setItem("mp_consent",v)}catch(e){}};
+function gaLoad(){
+  if(gaOk||!GA_ON)return;gaOk=true;window["ga-disable-"+GA_ID]=false;
+  window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};
+  gtag("js",new Date());gtag("config",GA_ID,{anonymize_ip:true});
+  const s=document.createElement("script");s.async=true;s.src="https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(GA_ID);document.head.appendChild(s)}
+function gaOff(){
+  gaOk=false;if(GA_ON)window["ga-disable-"+GA_ID]=true;
+  document.cookie.split(";").forEach(c=>{const n=c.split("=")[0].trim();if(n==="_ga"||n.indexOf("_ga_")===0)document.cookie=n+"=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"})}
+function track(nome,p){if(gaOk&&window.gtag){try{gtag("event",nome,p||{})}catch(e){}}}
+function ckBanner(){
+  const velho=$("ck");if(velho)velho.remove();
+  const b=el("div","ck");b.id="ck";b.setAttribute("role","dialog");b.setAttribute("aria-label","Preferências de cookies");
+  const p=el("p","","Usamos o Google Analytics para entender como o site é usado e melhorá-lo. Ele só funciona se você aceitar e não recebe o conteúdo dos seus estudos. ");
+  const a=el("a","","Política de Privacidade");a.href="/privacidade.html";p.appendChild(a);
+  const r=el("button","","Recusar"),ok=el("button","p","Aceitar"),bt=el("div","bt");
+  r.onclick=()=>{ckSet("0");gaOff();b.remove()};ok.onclick=()=>{ckSet("1");gaLoad();b.remove()};
+  bt.append(r,ok);b.append(p,bt);document.body.appendChild(b)}
+function ckInit(){
+  if(!GA_ON)return;
+  const c=ckGet();if(c==="1")gaLoad();else if(c===null)ckBanner();
+  $("ckpref-w").hidden=false;$("ckpref").onclick=ckBanner}
 
 const DICA="PDF (inclusive escaneado ou com imagens), DOCX, TXT, MD ou foto (JPG/PNG)";
 const OCR_LOTE=5, OCR_MAX=24, OCR_PAR=2, PORLOTE=3;
@@ -99,7 +332,7 @@ async function lerImagens(lote,de){
   let erro="";
   for(let a=0;a<3;a++){
     try{
-      const r=await fetch("/.netlify/functions/ler",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imagens:lote,de})});
+      const r=await fetch("/api/ler",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imagens:lote,de})});
       const d=await r.json().catch(()=>({}));
       if(r.ok&&d.texto)return d.texto;
       erro=d.erro||("Erro "+r.status);
@@ -116,6 +349,7 @@ async function paginaParaJpeg(pg){
   let b="";for(const q of [.72,.55,.4]){b=cv.toDataURL("image/jpeg",q).split(",")[1];if(b.length<=1.0e6)break}   // até ~1 MB por página
   cv.width=cv.height=0;pg.cleanup();return b}
 async function lerPDF(f,msg){
+  await lib("pdf");
   const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
   const O=pdfjsLib.OPS, imgOps=new Set([O.paintImageXObject,O.paintInlineImageXObject,O.paintImageMaskXObject,O.paintJpegXObject].filter(x=>x!==undefined));
   const pags=[];let tot=0;
@@ -163,12 +397,14 @@ async function lerFoto(f,msg){
 $("file").addEventListener("change",async ev=>{
   const f=ev.target.files[0]; if(!f)return;
   const h=$("fh"), msg=m=>{h.textContent=m}; $("go").disabled=true; showErr("");
+  let ext="";
   try{
-    const ext=f.name.split(".").pop().toLowerCase(); let t="",aviso="";
+    ext=f.name.split(".").pop().toLowerCase(); let t="",aviso="";
     if(ext==="pdf"){const r=await lerPDF(f,msg);t=r.texto;aviso=r.aviso}
     else if(["png","jpg","jpeg","webp"].includes(ext)){t=await lerFoto(f,msg);aviso=" · lido por imagem"}
     else if(ext==="docx"){
       msg("Lendo arquivo...");
+      await lib("mammoth");
       t=(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value;
     }else{
       msg("Lendo arquivo...");
@@ -178,7 +414,8 @@ $("file").addEventListener("change",async ev=>{
     t=t.trim();
     if(t.length<50)throw new Error("Não encontrei texto legível nesse arquivo. Cole o texto manualmente.");
     $("txt").value=t;cnt(); h.textContent="✓ "+f.name+" ("+t.length.toLocaleString("pt-BR")+" caracteres)"+aviso;
-  }catch(e){h.textContent=DICA; showErr("Não consegui ler o arquivo: "+(e.message||e))}
+    track("arquivo_lido",{tipo:ext,com_ocr:/por imagem/.test(aviso)?1:0});
+  }catch(e){h.textContent=DICA; showErr("Não consegui ler o arquivo: "+(e.message||e));track("erro_leitura_arquivo",{tipo:ext})}
   finally{$("go").disabled=gerando}
 });
 
@@ -226,7 +463,8 @@ $("go").addEventListener("click",async()=>{
   let trunc=t.length>MAX; if(trunc)t=t.slice(0,MAX);
   const btn=$("go"); gerando=true; btn.disabled=true; btn.textContent="Gerando... (pode levar até 1 minuto)";
   try{
-    const nT=+$("n").value, lv=$("lv").value;
+    const nT=+$("n").value, lv=$("lv").value, tg=Date.now();
+    track("gerar_simulado",{questoes:nT,nivel:lv,modo:$("mode").value,tamanho:t.length<5000?"ate_5k":t.length<30000?"5k_30k":"mais_30k"});
     const{jobs,segs}=planejar(t,nT);
     let feitos=0,total=jobs.length;
     const prog=()=>{btn.textContent="Gerando... "+Math.min(feitos,total)+" de "+total+" partes"};prog();
@@ -248,9 +486,11 @@ $("go").addEventListener("click",async()=>{
     qs=qs.slice(0,nT);
     if(!qs.length)throw new Error(erros[0]||"Não veio nenhuma questão válida. Tente novamente.");
     const extra=qs.length<nT?"Aviso: consegui gerar "+qs.length+" de "+nT+" questões ("+(erros[0]?erros[0]:"o gerador repetiu pontos do conteúdo")+"). Clique em Gerar simulado de novo para tentar completar.":"";
+    track("simulado_gerado",{questoes:qs.length,parcial:qs.length<nT?1:0,duracao_s:Math.round((Date.now()-tg)/1000)});
     Q=qs; mode=$("mode").value; meta={nome:$("nome").value.trim(),nivel:lv,tempo:+$("tm").value,modo:mode}; start(trunc,extra);
   }catch(e){
-    showErr("Erro ao gerar: "+((e&&e.message)||e));
+    const m=String((e&&e.message)||e);showErr("Erro ao gerar: "+m);
+    track("erro_geracao",{motivo:/Limite de uso/.test(m)?"limite":/alta demanda/.test(m)?"alta_demanda":/conex/i.test(m)?"conexao":"outro"});
   }finally{gerando=false;btn.disabled=false;btn.textContent="Gerar simulado"}
 });
 
@@ -291,6 +531,7 @@ function start(trunc,extra){
 
 function reveal(i){
   const q=Q[i],{bs,ex,c}=R[i],p=P[i];
+  c.querySelectorAll(".why").forEach(x=>x.remove());   // evita repetir as explicações se for chamado de novo
   bs.forEach((b,k)=>{b.disabled=true;b.classList.remove("sel");
     if(k===q.correta)b.classList.add("ok");else if(k===p)b.classList.add("er");
     const w=q.porque&&q.porque[k];
@@ -303,9 +544,10 @@ function reveal(i){
 }
 
 function finish(auto){
-  if(done)return;done=true;clearInterval(T);meta.gasto=Math.floor((Date.now()-t0)/1000);
+  if(done)return;done=true;lib("jspdf").catch(()=>{});clearInterval(T);meta.gasto=Math.floor((Date.now()-t0)/1000);
   Q.forEach((_,i)=>reveal(i));
   const hits=Q.filter((q,i)=>P[i]===q.correta).length;
+  track("simulado_finalizado",{questoes:Q.length,acerto_pct:Math.round(hits/Q.length*100),modo:mode,tempo_esgotado:auto===true?1:0});
   const f=$("fin");f.hidden=false;f.innerHTML="";
   f.appendChild(el("div","score","Você acertou "+hits+" de "+Q.length+" ("+Math.round(hits/Q.length*100)+"%)"));
   const ti=el("p","hint",(auto===true?"⏱ Tempo esgotado: simulado encerrado automaticamente. ":"")+"Tempo gasto: "+fmt(meta.gasto));ti.style.textAlign="center";f.appendChild(ti);
@@ -315,9 +557,9 @@ function finish(auto){
   pdf.hidden=!dl;pdf.onclick=async()=>{
     pe.hidden=true;let step="gerar o arquivo";
     try{
-      if(!(window.jspdf&&window.jspdf.jsPDF))throw new Error("a biblioteca de PDF não carregou (recarregue a página)");
+      await lib("jspdf");
       const data=makePDF(hits);step="salvar o arquivo";
-      const u=URL.createObjectURL(new Blob([data],{type:"application/pdf"})),a=document.createElement("a");a.href=u;a.download="simulado.pdf";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);
+      const u=URL.createObjectURL(new Blob([data],{type:"application/pdf"})),a=document.createElement("a");a.href=u;a.download="simulado.pdf";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);track("pdf_baixado",{questoes:Q.length});
     }catch(e){if(e&&e.code==="declined")return;
       pe.textContent="Não consegui "+step+": "+((e&&((e.code?e.code+" - ":"")+e.message))||e);pe.hidden=false}};
   const r=el("button","","Refazer");r.onclick=()=>{start(false);window.scrollTo({top:0,behavior:"smooth"})};
@@ -376,6 +618,7 @@ function makePDF(hits){
   for(let k=1;k<=n;k++){doc.setPage(k);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text("Mestre das provas  -  pagina "+k+" de "+n,105,291,{align:"center"})}
   return doc.output("arraybuffer");
 }
+ckInit();
 </script>
 </body>
 </html>
