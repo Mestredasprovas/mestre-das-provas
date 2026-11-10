@@ -1,0 +1,4 @@
+Bibliotecas de terceiros hospedadas neste site (copiadas sem alteração, exceto a remoção do comentário de source map):
+- pdf.js (pdfjs-dist) 3.11.174 - Apache License 2.0 - https://github.com/mozilla/pdf.js
+- mammoth 1.6.0 - BSD 2-Clause - https://github.com/mwilliamson/mammoth.js
+- jsPDF 2.5.1 - MIT - https://github.com/parallax/jsPDF

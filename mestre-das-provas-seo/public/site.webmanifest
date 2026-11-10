@@ -1,0 +1,33 @@
+{
+  "name": "Mestre das Provas",
+  "short_name": "Mestre das Provas",
+  "description": "Cole o texto ou envie o PDF da matéria e gere um simulado com questões de múltipla escolha, correção comentada e PDF para baixar. Sem cadastro.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f2",
+  "theme_color": "#2f5d50",
+  "categories": [
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

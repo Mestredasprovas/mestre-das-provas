@@ -1,0 +1,7 @@
+# Mestre das Provas
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /.netlify/
+
+Sitemap: https://omestredasprovas.netlify.app/sitemap.xml
